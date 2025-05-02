@@ -27,7 +27,8 @@
       <button @click="togglePlayPause" title="play/pause (space)">⏯️</button>
       <button @click="speedUp" title="speed up (→)">⏩</button>
       <button @click="reset" title="reset (r)">🔄</button>
-      <button @click="download" title="download">💾</button>
+      <button @click="download('gif')" title="download gif">💾</button>
+      <button @click="download('png')" title="download Sprite">🗺️</button>
     </div>
   </div>
   <!-- Zoom Overlay -->

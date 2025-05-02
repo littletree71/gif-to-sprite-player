@@ -223,10 +223,23 @@ export function useGifToSpritePlayer({
     }
   }
 
-  function download() {
+  function download(type: "gif" | "png") {
     const link = document.createElement("a");
-    link.download = "spritesheet.png";
-    link.href = spriteDataURL;
+
+    const fileNameWithExtension =
+      props.src.split("/").pop()?.split("?")[0] || "file";
+    const fileName = fileNameWithExtension.replace(/\.[^/.]+$/, ""); // 移除副檔名
+
+    if (type === "gif") {
+      // 下載原始 GIF
+      link.download = `${fileName}.gif`;
+      link.href = props.src; // 使用原始 GIF 的 URL
+    } else if (type === "png") {
+      // 下載生成的 Sprite PNG
+      link.download = `${fileName}-spritesheet.png`;
+      link.href = spriteDataURL; // 使用生成的 Sprite PNG 的 Data URL
+    }
+
     link.click();
   }
 
