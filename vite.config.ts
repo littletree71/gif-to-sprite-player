@@ -1,9 +1,20 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from "path"
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
-export default defineConfig({
-  plugins: [vue()],
+export default defineConfig(({ command }) => ({
+  publicDir: command === 'build' ? false : 'public',
+  plugins: [
+    vue(),
+    viteStaticCopy({
+      targets: [
+        { src: 'LICENSE', dest: '' },
+        { src: 'README.md', dest: '' },
+        { src: 'THIRD_PARTY_LICENSES.md', dest: '' }, // 若有
+      ],
+    }),
+  ],
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/components/GifToSpritePlayer/index.ts"),
@@ -24,4 +35,4 @@ export default defineConfig({
       '@': path.resolve(new URL('.', import.meta.url).pathname, 'src')
     }
   }
-})
+}))
