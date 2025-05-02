@@ -1,5 +1,5 @@
 import { nextTick, ref, Ref } from "vue";
-import { SpritePlayer } from "@/components/GifToSpritePlayer/utils/SpritePlayer";
+import { SpritePlayer } from "./SpritePlayer";
 import panzoom from "@panzoom/panzoom";
 import { decompressFrames, parseGIF } from "gifuct-js";
 

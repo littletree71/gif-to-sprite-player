@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import GifToSpritePlayer from "@/components/GifToSpritePlayer";
+import GifToSpritePlayer from "./components/GifToSpritePlayer";
 </script>
 
 <style>
