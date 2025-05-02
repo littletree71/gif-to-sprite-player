@@ -25,12 +25,12 @@ jobs:
     - name: Install dependencies
       run: bun install
 
+    - name: Run build Lib
+      run: bun run build:lib
+      
     - name: Run build App
       run: bun run build:app
 
-    - name: Run build App
-      run: bun run build:lib
-    
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
