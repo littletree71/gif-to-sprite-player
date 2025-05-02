@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "preview:web": "vite preview --outDir dist/app",
     "build:app": "tsc --project tsconfig.app.json && vite build",
     "build:lib": "tsc --project tsconfig.lib.json && vite build --mode lib",
     "prepublishOnly": "bun run build && bun run license:gen",

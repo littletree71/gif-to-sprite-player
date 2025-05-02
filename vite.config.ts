@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
         ],
       }),
     ],
+    publicDir: isLib ? false : 'public',
     build: isLib
       ? {
           lib: {
