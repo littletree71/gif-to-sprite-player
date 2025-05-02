@@ -4,14 +4,15 @@
     @mouseenter="isHovered = true" 
     @mouseleave="isHovered = false"
   >
-    <canvas
+  <canvas
       v-show="!spritesheetReady || debug"
       ref="canvasRef"
       :width="frameWidth * frameCount"
       :height="frameHeight"
       style="display: none"
     />
-    <canvas
+
+  <canvas
       v-show="spritesheetReady"
       ref="playCanvas"
       :width="frameWidth"
@@ -33,8 +34,6 @@
     <!-- Zoom Overlay -->
     <div v-if="isZoomed" class="zoom-overlay" @click="toggleZoom">
       <canvas ref="zoomCanvas"
-        :width="frameWidth * 2"
-        :height="frameHeight * 2"
         @mousedown.stop
         @mouseup.stop
       >
@@ -49,7 +48,7 @@ import { parseGIF, decompressFrames } from 'gifuct-js'
 import { SpritePlayer } from '@/utils/SpritePlayer'
 import panzoom from '@panzoom/panzoom';
 
-const props = defineProps<{ src: string, debug: boolean }>()
+const props = defineProps<{ src: string, debug: boolean, zoomPercentage?: number }>()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const playCanvas = ref<HTMLCanvasElement | null>(null)
 const zoomCanvas = ref<HTMLCanvasElement | null>(null)
@@ -64,6 +63,9 @@ const isPlaying = ref(false) // 播放狀態
 const isZoomed = ref(false) // 放大狀態
 const isHovered = ref(false);
 let spriteDataURL = ''
+
+// 預設 zoomPercentage 為 85%
+const zoomPercentage = props.zoomPercentage || 85;
 
 onMounted(async () => {
   const res = await fetch(props.src)
@@ -277,6 +279,15 @@ async function toggleZoom(event?: MouseEvent) {
     const zoomCanvasEl = zoomCanvas.value;
 
     if (playCanvasEl && zoomCanvasEl && player.value) {
+      // 計算放大倍率
+      const screenWidth = window.innerWidth * zoomPercentage / 100;
+      const screenHeight = window.innerHeight * zoomPercentage / 100;
+      const zoomScale = Math.min(screenWidth / frameWidth.value, screenHeight / frameHeight.value);
+
+      // 設定 zoomCanvas 的寬高
+      zoomCanvasEl.width = frameWidth.value * zoomScale;
+      zoomCanvasEl.height = frameHeight.value * zoomScale;
+
       // 初始化 zoomCanvas 的 SpritePlayer
       const zoomPlayer = new SpritePlayer({
         canvas: zoomCanvasEl,
@@ -301,7 +312,7 @@ async function toggleZoom(event?: MouseEvent) {
       // 初始化 Panzoom
       const panzoomInstance = panzoom(zoomCanvasEl, {
         maxScale: 5, // 最大縮放比例
-        minScale: 1, // 最小縮放比例
+        minScale: 0.1, // 最小縮放比例
       });
 
       // 綁定滾輪縮放事件
