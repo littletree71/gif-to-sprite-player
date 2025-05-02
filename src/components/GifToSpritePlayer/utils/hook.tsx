@@ -11,7 +11,7 @@ declare global {
 }
 
 export function useGifToSpritePlayer({
-  canvasRef,
+  spriteCanvas,
   playCanvas,
   zoomCanvas,
   fps,
@@ -23,7 +23,7 @@ export function useGifToSpritePlayer({
   isHovered,
   props,
 }: {
-  canvasRef: Ref<HTMLCanvasElement | null>;
+  spriteCanvas: Ref<HTMLCanvasElement | null>;
   playCanvas: Ref<HTMLCanvasElement | null>;
   zoomCanvas: Ref<HTMLCanvasElement | null>;
   fps: Ref<number>;
@@ -45,6 +45,9 @@ export function useGifToSpritePlayer({
   const player = ref<SpritePlayer | null>(null);
   let spriteDataURL = "";
 
+  /**
+   * @description: initialize the sprite sheet and player
+   */
   async function mount() {
     // 預設 zoomPercentage 為 85%
     const res = await fetch(props.src);
@@ -60,7 +63,7 @@ export function useGifToSpritePlayer({
 
     await nextTick(); // 等待 DOM 更新完成
 
-    const canvas = canvasRef.value!;
+    const canvas = spriteCanvas.value!;
     const ctx = canvas.getContext("2d")!;
     canvas.width = frameWidth.value * frameCount.value;
     canvas.height = frameHeight.value;
@@ -75,7 +78,6 @@ export function useGifToSpritePlayer({
         const currentPatch = new Uint8ClampedArray(frame.patch);
 
         let isNegative = false;
-
         if (prevPatch) {
           let totalDiff = 0;
           for (let j = 0; j < currentPatch.length; j++) {
@@ -160,43 +162,9 @@ export function useGifToSpritePlayer({
     if (props.debug) console.log(frames);
     spriteDataURL = canvas.toDataURL();
 
-    setupPlayer();
-    play();
-  }
-
-  function handleKeyDown(event: KeyboardEvent) {
-    if (isZoomed.value && event.key === "Escape") {
-      isZoomed.value = false; // 關閉放大視圖
-    }
-
-    // 只有當滑鼠懸停時，處理以下按鍵
-    if (isHovered.value || isZoomed.value) {
-      switch (event.key.toLowerCase()) {
-        case " ": // 空格鍵播放/暫停
-          event.preventDefault(); // 防止頁面滾動
-          togglePlayPause();
-          break;
-        case "r": // R 鍵重置
-          reset();
-          break;
-        case "z": // Z 鍵放大
-          toggleZoom();
-          break;
-        case "arrowleft": // 左方向鍵減速
-          speedDown();
-          break;
-        case "arrowright": // 左方向鍵減速
-          speedUp();
-          break;
-      }
-    }
-  }
-
-  function setupPlayer() {
-    const canvas = playCanvas.value!;
-
+    const playCanvasEl = playCanvas.value as HTMLCanvasElement;
     player.value = new SpritePlayer({
-      canvas,
+      canvas: playCanvasEl,
       src: spriteDataURL,
       frameWidth: frameWidth.value,
       frameHeight: frameHeight.value,
@@ -204,6 +172,8 @@ export function useGifToSpritePlayer({
       frameRate: fps.value,
       loop: true,
     });
+
+    play();
   }
 
   function play() {
@@ -213,6 +183,7 @@ export function useGifToSpritePlayer({
       zoomCanvas.value?.zoomPlayer?.play();
     }
   }
+
   function pause() {
     player.value?.pause();
     isPlaying.value = false;
@@ -220,6 +191,7 @@ export function useGifToSpritePlayer({
       zoomCanvas.value?.zoomPlayer?.pause();
     }
   }
+
   function togglePlayPause() {
     if (isPlaying.value) {
       pause();
@@ -227,12 +199,14 @@ export function useGifToSpritePlayer({
       play();
     }
   }
+
   function reset() {
     player.value?.reset();
     if (isZoomed.value) {
       zoomCanvas.value?.zoomPlayer?.reset();
     }
   }
+
   function speedUp() {
     fps.value += 2;
     player.value?.setSpeed(fps.value);
@@ -240,6 +214,7 @@ export function useGifToSpritePlayer({
       zoomCanvas.value?.zoomPlayer?.setSpeed(fps.value);
     }
   }
+
   function speedDown() {
     fps.value = Math.max(1, fps.value - 2);
     player.value?.setSpeed(fps.value);
@@ -247,12 +222,17 @@ export function useGifToSpritePlayer({
       zoomCanvas.value?.zoomPlayer?.setSpeed(fps.value);
     }
   }
+
   function download() {
     const link = document.createElement("a");
     link.download = "spritesheet.png";
     link.href = spriteDataURL;
     link.click();
   }
+
+  /**
+   * @description: toggle zoom canvas
+   */
   async function toggleZoom(event?: MouseEvent) {
     if (event && event.target === zoomCanvas.value) {
       event.stopPropagation();
@@ -317,6 +297,34 @@ export function useGifToSpritePlayer({
       if (zoomCanvasEl?.zoomPlayer) {
         zoomCanvasEl.zoomPlayer.pause();
         zoomCanvasEl.zoomPlayer = null;
+      }
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (isZoomed.value && event.key === "Escape") {
+      isZoomed.value = false; // 關閉放大視圖
+    }
+
+    // 只有當滑鼠懸停時，處理以下按鍵
+    if (isHovered.value || isZoomed.value) {
+      switch (event.key.toLowerCase()) {
+        case " ": // 空格鍵播放/暫停
+          event.preventDefault(); // 防止頁面滾動
+          togglePlayPause();
+          break;
+        case "r": // R 鍵重置
+          reset();
+          break;
+        case "z": // Z 鍵放大
+          toggleZoom();
+          break;
+        case "arrowleft": // 左方向鍵減速
+          speedDown();
+          break;
+        case "arrowright": // 左方向鍵減速
+          speedUp();
+          break;
       }
     }
   }

@@ -4,12 +4,12 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
+    <!--  -->
     <canvas
       v-show="!spritesheetReady || debug"
-      ref="canvasRef"
+      ref="spriteCanvas"
       :width="frameWidth * frameCount"
       :height="frameHeight"
-      style="display: none"
     />
     <canvas
       v-show="spritesheetReady"
@@ -39,7 +39,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { useGifToSpritePlayer } from "./utils/hook";
-import { SpritePlayer } from "@/components/GifToSpritePlayer/utils/SpritePlayer";
 import "./GifToSpritePlayer.styles.css";
 
 const props = defineProps<{
@@ -48,7 +47,7 @@ const props = defineProps<{
   zoomPercentage?: number;
   fps?: number;
 }>();
-const canvasRef = ref<HTMLCanvasElement | null>(null);
+const spriteCanvas = ref<HTMLCanvasElement | null>(null);
 const playCanvas = ref<HTMLCanvasElement | null>(null);
 const zoomCanvas = ref<HTMLCanvasElement | null>(null);
 
@@ -71,7 +70,7 @@ const {
   download,
   handleKeyDown,
 } = useGifToSpritePlayer({
-  canvasRef,
+  spriteCanvas,
   playCanvas,
   zoomCanvas,
   fps,
