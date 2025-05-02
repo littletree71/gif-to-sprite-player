@@ -1,4 +1,3 @@
-
 export class SpritePlayer {
   private ctx: CanvasRenderingContext2D;
   private img: HTMLImageElement;
@@ -54,6 +53,15 @@ export class SpritePlayer {
     this.frameRate = Math.max(1, fps);
   }
 
+  setCurrentFrame(frame: number) {
+    this.currentFrame = frame % this.frameCount; // 確保幀數不超過範圍
+    this.drawFrame();
+  }
+
+  getCurrentFrame() {
+    return this.currentFrame;
+  }
+
   private loopFrame() {
     if (!this.isPlaying) return;
     const now = performance.now();
@@ -75,8 +83,23 @@ export class SpritePlayer {
   }
 
   private drawFrame() {
-    const x = this.currentFrame * this.frameWidth;
-    this.ctx.clearRect(0, 0, this.frameWidth, this.frameHeight);
-    this.ctx.drawImage(this.img, x, 0, this.frameWidth, this.frameHeight, 0, 0, this.frameWidth, this.frameHeight);
+    const sx = this.currentFrame * this.frameWidth;
+    const sy = 0;
+    const sw = this.frameWidth;
+    const sh = this.frameHeight;
+    const dx = 0;
+    const dy = 0;
+    const dw = this.frameWidth;
+    const dh = this.frameHeight;
+
+    // 清空畫布
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+    // 放大繪製
+    this.ctx.save();
+    const scaleFactor = this.ctx.canvas.width / this.frameWidth; // 計算放大比例
+    this.ctx.scale(scaleFactor, scaleFactor);
+    this.ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
+    this.ctx.restore();
   }
 }

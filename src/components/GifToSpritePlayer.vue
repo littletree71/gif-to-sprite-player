@@ -13,16 +13,24 @@
       :width="frameWidth"
       :height="frameHeight"
       @click="togglePlayPause"
+      @dblclick="toggleZoom"
       style="cursor: pointer"
     />
     <div class="fps-display">FPS: {{ fps }}</div>
     <div class="controls">
-      <!-- <button @click="play" title="play">▶️</button>
-      <button @click="pause" title="pause">⏸️</button> -->
       <button @click="speedDown" title="speed down">⏪</button>
       <button @click="speedUp" title="speed up">⏩</button>
       <button @click="reset" title="reset">🔄</button>
       <button @click="download" title="download">📥</button>
+    </div>
+
+    <!-- Zoom Overlay -->
+    <div v-if="isZoomed" class="zoom-overlay" @click="toggleZoom">
+      <canvas ref="zoomCanvas"
+        :width="frameWidth * 2"
+        :height="frameHeight * 2"
+      >
+      </canvas>
     </div>
   </div>
 </template>
@@ -35,6 +43,7 @@ import { SpritePlayer } from '@/utils/SpritePlayer'
 const props = defineProps<{ src: string, debug: boolean }>()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const playCanvas = ref<HTMLCanvasElement | null>(null)
+const zoomCanvas = ref<HTMLCanvasElement | null>(null)
 const player = ref<SpritePlayer | null>(null)
 
 const fps = ref(12)
@@ -43,6 +52,7 @@ const frameHeight = ref(0)
 const frameCount = ref(0)
 const spritesheetReady = ref(false)
 const isPlaying = ref(false) // 播放狀態
+const isZoomed = ref(false) // 放大狀態
 let spriteDataURL = ''
 
 onMounted(async () => {
@@ -195,6 +205,46 @@ function download() {
   link.href = spriteDataURL
   link.click()
 }
+async function toggleZoom() {
+  isZoomed.value = !isZoomed.value;
+
+  if (isZoomed.value) {
+    await nextTick();
+    const playCanvasEl = playCanvas.value;
+    const zoomCanvasEl = zoomCanvas.value;
+
+    if (playCanvasEl && zoomCanvasEl && player.value) {
+      // 初始化 zoomCanvas 的 SpritePlayer
+      const zoomPlayer = new SpritePlayer({
+        canvas: zoomCanvasEl,
+        src: spriteDataURL,
+        frameWidth: frameWidth.value,
+        frameHeight: frameHeight.value,
+        frameCount: frameCount.value,
+        frameRate: fps.value,
+        loop: true,
+      });
+
+      // 同步當前幀數
+      zoomPlayer.setCurrentFrame(player.value.getCurrentFrame());
+
+      // 播放放大的內容
+      if (isPlaying.value) {
+        zoomPlayer.play();
+      }
+
+      // 保存 zoomPlayer 實例，方便後續操作
+      zoomCanvasEl.zoomPlayer = zoomPlayer;
+    }
+  } else {
+    // 停止並清理 zoomCanvas 的 SpritePlayer
+    const zoomCanvasEl = zoomCanvas.value;
+    if (zoomCanvasEl?.zoomPlayer) {
+      zoomCanvasEl.zoomPlayer.pause();
+      zoomCanvasEl.zoomPlayer = null;
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -205,13 +255,13 @@ function download() {
 
 .controls {
   position: absolute;
-  bottom: 10px; /* 按鈕靠下 */
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.3); /* 可選，讓背景稍微變暗 */
+  background: rgba(0, 0, 0, 0.3);
   padding: 5px;
   border-radius: 8px;
 }
@@ -229,18 +279,36 @@ function download() {
 
 .fps-display {
   position: absolute;
-  top: 10px; /* FPS 顯示在右上角 */
-  right: 10px;
-  color: yellow;
+  top: 10px;
+  left: 10px;
+  color: white;
   background: rgba(0, 0, 0, 0.5);
   padding: 5px 10px;
   border-radius: 5px;
   font-size: 14px;
 }
 
-button {
-  margin: 4px;
-  z-index: 10; /* 確保按鈕在最上層 */
+.zoom-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.zoom-overlay canvas {
+  width: auto; /* 確保不拉伸 */
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border: 2px solid white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
   cursor: pointer;
 }
 </style>
