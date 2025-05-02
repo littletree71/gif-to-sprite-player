@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   const isLib = mode === 'lib'; // 判斷是否為元件庫模式
 
   return {
+    base: './',
     plugins: [
       vue(),
       viteStaticCopy({
