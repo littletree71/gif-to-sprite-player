@@ -12,15 +12,17 @@
       ref="playCanvas"
       :width="frameWidth"
       :height="frameHeight"
+      @click="togglePlayPause"
+      style="cursor: pointer"
     />
-    <div v-if="spritesheetReady" class="controls">
-      <button @click="play">▶️ 播放</button>
-      <button @click="pause">⏸ 暫停</button>
-      <button @click="reset">🔄 重置</button>
-      <button @click="speedDown">⏬ 減速</button>
-      <button @click="speedUp">⏫ 加速</button>
-      <button @click="download">📥 下載 SpriteSheet</button>
-      <div>FPS: {{ fps }}</div>
+    <div class="fps-display">FPS: {{ fps }}</div>
+    <div class="controls">
+      <!-- <button @click="play" title="play">▶️</button>
+      <button @click="pause" title="pause">⏸️</button> -->
+      <button @click="speedDown" title="speed down">⏪</button>
+      <button @click="speedUp" title="speed up">⏩</button>
+      <button @click="reset" title="reset">🔄</button>
+      <button @click="download" title="download">📥</button>
     </div>
   </div>
 </template>
@@ -30,7 +32,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { parseGIF, decompressFrames } from 'gifuct-js'
 import { SpritePlayer } from '@/utils/SpritePlayer'
 
-const props = defineProps<{ src: string, debug: bool }>()
+const props = defineProps<{ src: string, debug: boolean }>()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const playCanvas = ref<HTMLCanvasElement | null>(null)
 const player = ref<SpritePlayer | null>(null)
@@ -40,6 +42,7 @@ const frameWidth = ref(0)
 const frameHeight = ref(0)
 const frameCount = ref(0)
 const spritesheetReady = ref(false)
+const isPlaying = ref(false) // 播放狀態
 let spriteDataURL = ''
 
 onMounted(async () => {
@@ -123,27 +126,28 @@ onMounted(async () => {
           isNegative = true
           console.warn(`⚠️ Frame ${i} detected as negative frame and will be skipped.`)
           if (prevPatch) {
-            const imgData = new ImageData(prevPatch, frameWidth, frameHeight)
-            ctx.putImageData(imgData, i * frameWidth, 0)
+            const imgData = new ImageData(prevPatch, frameWidth, frameHeight);
+            ctx.putImageData(imgData, i * frameWidth, 0);
           }
           return
         }
       }
 
       // 更新前一幀
-      prevPatch = currentPatch
+      prevPatch = currentPatch;
 
       // 繪製 sprite sheet
-      const imgData = new ImageData(new Uint8ClampedArray(currentPatch), frameWidth, frameHeight)
-      ctx.putImageData(imgData, i * frameWidth, 0)
+      const imgData = new ImageData(new Uint8ClampedArray(currentPatch), frameWidth, frameHeight);
+      ctx.putImageData(imgData, i * frameWidth, 0);
     } catch (error) {
-      console.error(`Error processing frame ${i}:`, error)
+      console.error(`Error processing frame ${i}:`, error);
     }
   })
   if(props.debug) console.log(frames);
-  spriteDataURL = canvas.toDataURL()
+  spriteDataURL = canvas.toDataURL();
 
-  setupPlayer()
+  setupPlayer();
+  play();
 })
 
 function setupPlayer() {
@@ -161,9 +165,18 @@ function setupPlayer() {
 
 function play() {
   player.value?.play()
+  isPlaying.value = true
 }
 function pause() {
   player.value?.pause()
+  isPlaying.value = false
+}
+function togglePlayPause() {
+  if (isPlaying.value) {
+    pause()
+  } else {
+    play()
+  }
 }
 function reset() {
   player.value?.reset()
@@ -185,10 +198,49 @@ function download() {
 </script>
 
 <style scoped>
-.controls {
-  margin-top: 10px;
+.gif-to-sprite {
+  position: relative;
+  display: inline-block;
 }
+
+.controls {
+  position: absolute;
+  bottom: 10px; /* 按鈕靠下 */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3); /* 可選，讓背景稍微變暗 */
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.controls,
+.fps-display {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gif-to-sprite:hover .controls,
+.gif-to-sprite:hover .fps-display {
+  opacity: 1;
+}
+
+.fps-display {
+  position: absolute;
+  top: 10px; /* FPS 顯示在右上角 */
+  right: 10px;
+  color: yellow;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
 button {
   margin: 4px;
+  z-index: 10; /* 確保按鈕在最上層 */
+  cursor: pointer;
 }
 </style>

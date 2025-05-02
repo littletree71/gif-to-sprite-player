@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <h1>🎞 GIF to Sprite Player</h1>
-    <GifToSpritePlayer src="/sample.gif" debug="true" />
+    <GifToSpritePlayer src="/sample.gif" />
   </div>
 </template>
 
