@@ -27,6 +27,12 @@ jobs:
 
     - name: Run build App
       run: bun run build:lib
-      
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist/app
+        
     #- name: Run tests
     #  run: npm test
