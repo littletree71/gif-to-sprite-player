@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import GifToSpritePlayer from './components/GifToSpritePlayer.vue'
+import GifToSpritePlayer from "@/components/GifToSpritePlayer";
 </script>
 
 <style>

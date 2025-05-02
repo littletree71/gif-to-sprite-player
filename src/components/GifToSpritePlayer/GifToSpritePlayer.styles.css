@@ -1,0 +1,72 @@
+.gif-to-sprite {
+  position: relative;
+  display: inline-block;
+}
+
+.controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 5px;
+  border-radius: 8px;
+}
+.controls button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.controls,
+.fps-display {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gif-to-sprite:hover .controls,
+.gif-to-sprite:hover .fps-display {
+  opacity: 1;
+}
+
+.fps-display {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.zoom-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.zoom-overlay canvas {
+  width: auto; /* 確保不拉伸 */
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  border: 2px solid white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+}

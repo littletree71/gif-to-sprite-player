@@ -103,3 +103,12 @@ export class SpritePlayer {
     this.ctx.restore();
   }
 }
+export interface SpritePlayerOptions {
+  canvas: HTMLCanvasElement;
+  src: string;
+  frameWidth: number;
+  frameHeight: number;
+  frameCount: number;
+  frameRate?: number;
+  loop?: boolean;
+}
