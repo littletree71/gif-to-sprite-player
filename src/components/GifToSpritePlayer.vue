@@ -1,5 +1,9 @@
 <template>
-  <div class="gif-to-sprite">
+  <div 
+    class="gif-to-sprite"
+    @mouseenter="isHovered = true" 
+    @mouseleave="isHovered = false"
+  >
     <canvas
       v-show="!spritesheetReady || debug"
       ref="canvasRef"
@@ -18,10 +22,12 @@
     />
     <div class="fps-display">FPS: {{ fps }}</div>
     <div class="controls">
-      <button @click="speedDown" title="speed down">⏪</button>
-      <button @click="speedUp" title="speed up">⏩</button>
-      <button @click="reset" title="reset">🔄</button>
-      <button @click="download" title="download">📥</button>
+      <button @click="toggleZoom" title="zoom (z)">🔎</button>
+      <button @click="speedDown" title="speed down (←)">⏪</button>
+      <button @click="togglePlayPause" title="play/pause (space)">⏯️</button>
+      <button @click="speedUp" title="speed up (→)">⏩</button>
+      <button @click="reset" title="reset (r)">🔄</button>
+      <button @click="download" title="download">💾</button>
     </div>
 
     <!-- Zoom Overlay -->
@@ -29,6 +35,8 @@
       <canvas ref="zoomCanvas"
         :width="frameWidth * 2"
         :height="frameHeight * 2"
+        @mousedown.stop
+        @mouseup.stop
       >
       </canvas>
     </div>
@@ -36,9 +44,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { parseGIF, decompressFrames } from 'gifuct-js'
 import { SpritePlayer } from '@/utils/SpritePlayer'
+import panzoom from '@panzoom/panzoom';
 
 const props = defineProps<{ src: string, debug: boolean }>()
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -53,6 +62,7 @@ const frameCount = ref(0)
 const spritesheetReady = ref(false)
 const isPlaying = ref(false) // 播放狀態
 const isZoomed = ref(false) // 放大狀態
+const isHovered = ref(false);
 let spriteDataURL = ''
 
 onMounted(async () => {
@@ -160,6 +170,42 @@ onMounted(async () => {
   play();
 })
 
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (isZoomed.value && event.key === 'Escape') {
+    isZoomed.value = false; // 關閉放大視圖
+  }
+  
+   // 只有當滑鼠懸停時，處理以下按鍵
+   if (isHovered.value) {
+    switch (event.key.toLowerCase()) {
+      case ' ': // 空格鍵播放/暫停
+        event.preventDefault(); // 防止頁面滾動
+        togglePlayPause();
+        break;
+      case 'r': // R 鍵重置
+        reset();
+        break;
+      case 'z': // Z 鍵放大
+        toggleZoom();
+        break;
+      case 'arrowleft': // 左方向鍵減速
+        speedDown();
+        break;
+      case 'arrowright': // 左方向鍵減速
+        speedUp();
+        break;  
+    }
+  }
+}
+
 function setupPlayer() {
   const canvas = playCanvas.value!
   player.value = new SpritePlayer({
@@ -176,10 +222,16 @@ function setupPlayer() {
 function play() {
   player.value?.play()
   isPlaying.value = true
+  if (isZoomed.value) {
+    zoomCanvas.value?.zoomPlayer?.play()
+  }
 }
 function pause() {
   player.value?.pause()
   isPlaying.value = false
+  if (isZoomed.value) {
+    zoomCanvas.value?.zoomPlayer?.pause()
+  }
 }
 function togglePlayPause() {
   if (isPlaying.value) {
@@ -194,10 +246,17 @@ function reset() {
 function speedUp() {
   fps.value += 2
   player.value?.setSpeed(fps.value)
+  if (isZoomed.value) {
+    zoomCanvas.value?.zoomPlayer?.setSpeed(fps.value);
+    
+  }
 }
 function speedDown() {
   fps.value = Math.max(1, fps.value - 2)
   player.value?.setSpeed(fps.value)
+  if (isZoomed.value) {
+    zoomCanvas.value?.zoomPlayer?.setSpeed(fps.value);
+  }
 }
 function download() {
   const link = document.createElement('a')
@@ -205,9 +264,13 @@ function download() {
   link.href = spriteDataURL
   link.click()
 }
-async function toggleZoom() {
-  isZoomed.value = !isZoomed.value;
+async function toggleZoom(event?: MouseEvent) {
+  if (event && event.target === zoomCanvas.value) {
+    event.stopPropagation();
+    return;
+  }
 
+  isZoomed.value = !isZoomed.value;
   if (isZoomed.value) {
     await nextTick();
     const playCanvasEl = playCanvas.value;
@@ -235,6 +298,14 @@ async function toggleZoom() {
 
       // 保存 zoomPlayer 實例，方便後續操作
       zoomCanvasEl.zoomPlayer = zoomPlayer;
+      // 初始化 Panzoom
+      const panzoomInstance = panzoom(zoomCanvasEl, {
+        maxScale: 5, // 最大縮放比例
+        minScale: 1, // 最小縮放比例
+      });
+
+      // 綁定滾輪縮放事件
+      zoomCanvasEl.parentElement?.addEventListener('wheel', panzoomInstance.zoomWithWheel);
     }
   } else {
     // 停止並清理 zoomCanvas 的 SpritePlayer
@@ -255,7 +326,7 @@ async function toggleZoom() {
 
 .controls {
   position: absolute;
-  bottom: 10px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -264,6 +335,15 @@ async function toggleZoom() {
   background: rgba(0, 0, 0, 0.3);
   padding: 5px;
   border-radius: 8px;
+}
+.controls button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
 .controls,

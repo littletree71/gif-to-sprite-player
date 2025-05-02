@@ -6,6 +6,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@panzoom/panzoom": "^4.6.0",
     "gifuct-js": "^2.1.2",
     "vue": "^3.4.0"
   },
