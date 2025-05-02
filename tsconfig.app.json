@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/app", // 輸出目錄
+    "types": ["vite/client"] // 支持 Vite 的全局類型
+  },
+  "include": ["src/main.ts", "src/**/*.vue","src/global.d.ts"],
+}
